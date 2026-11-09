@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тэнхлүүн Карго</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#fff8fb;color:#30232b}
+header{background:white;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px #f3dce7}
+.logo{font-size:21px;font-weight:800;color:#e75b98}
+.logo span{color:#555}
+.login{background:#e75b98;color:white;border:0;padding:11px 17px;border-radius:22px;font-weight:bold}
+.hero{text-align:center;padding:48px 20px 35px;background:linear-gradient(140deg,#fff0f6,#fff 70%)}
+.hero h1{font-size:30px;color:#d94f8d;margin:5px 0 12px}
+.hero p{color:#806b77;font-size:15px;line-height:1.7}
+.track{background:white;margin:10px 18px;padding:24px 19px;border-radius:20px;box-shadow:0 5px 25px #edcbdc}
+.track h2{text-align:center;font-size:21px;color:#d94f8d}
+.track p{text-align:center;color:#887580;font-size:13px}
+input{width:100%;padding:15px;border:1px solid #f0d2e0;border-radius:12px;font-size:15px;margin:9px 0;outline:none}
+input:focus{border-color:#e75b98}
+.mainbtn{width:100%;padding:15px;background:#e75b98;color:white;border:0;border-radius:12px;font-size:16px;font-weight:bold;margin-top:8px}
+.section{padding:30px 20px}
+.section h2{text-align:center;color:#d94f8d}
+.services{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.service{background:white;padding:19px 12px;border-radius:16px;text-align:center;box-shadow:0 3px 12px #f3e0e9}
+.service .emoji{font-size:28px}
+.service b{display:block;margin:9px 0;color:#d94f8d}
+.service small{color:#887580;line-height:1.5}
+footer{background:#fbe5ef;text-align:center;padding:27px 15px;color:#765565;font-size:13px;line-height:1.8}
+.modal{display:none;position:fixed;inset:0;background:#0007;align-items:center;justify-content:center;padding:20px}
+.modalbox{background:white;border-radius:20px;padding:25px;width:100%;max-width:380px}
+.modalbox h2{color:#d94f8d}
+.close{float:right;border:0;background:none;font-size:23px}
+#message{text-align:center;color:#d94f8d;font-size:14px}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="logo">♡ ТЭНХЛҮҮН <span>КАРГО</span></div>
+ <button class="login" onclick="openLogin()">Нэвтрэх</button>
+</header>
+
+<section class="hero">
+ <div style="font-size:43px">📦</div>
+ <h1>Таны ачаа, бидний хариуцлага</h1>
+ <p>Хятадаас Монгол руу таны захиалгыг<br>найдвартай хүргэнэ.</p>
+</section>
+
+<section class="track">
+ <h2>♡ Илгээмжээ хайх</h2>
+ <p>Каргоны кодоо оруулж ачааныхаа мэдээллийг шалгана уу.</p>
+ <input id="tracking" placeholder="Илгээмжийн кодоо оруулна уу">
+ <button class="mainbtn" onclick="trackParcel()">ХАЙХ</button>
+ <div id="message"></div>
+</section>
+
+<section class="section">
+ <h2>Манай үйлчилгээ</h2>
+ <div class="services">
+  <div class="service">
+   <div class="emoji">📦</div>
+   <b>Ачаа тээвэр</b>
+   <small>Хятадаас Монгол руу карго тээвэр</small>
+  </div>
+  <div class="service">
+   <div class="emoji">🔍</div>
+   <b>Ачаа хянах</b>
+   <small>Илгээмжийн төлөвөө шалгах</small>
+  </div>
+  <div class="service">
+   <div class="emoji">🏢</div>
+   <b>Агуулах</b>
+   <small>Эрээн дэх агуулахын үйлчилгээ</small>
+  </div>
+  <div class="service">
+   <div class="emoji">💗</div>
+   <b>Найдвартай хүргэлт</b>
+   <small>Таны ачааг хариуцлагатай хүргэнэ</small>
+  </div>
+ </div>
+</section>
+
+<footer>
+ <b>♡ ТЭНХЛҮҮН КАРГО</b><br>
+ Таны ачаа, бидний хариуцлага.<br>
+ <span>Холбоо барих мэдээллийг энд нэмнэ.</span>
+</footer>
+
+<div class="modal" id="loginModal">
+ <div class="modalbox">
+  <button class="close" onclick="closeLogin()">×</button>
+  <h2>Тавтай морил 💗</h2>
+  <input id="email" type="email" placeholder="Имэйл хаяг">
+  <input id="password" type="password" placeholder="Нууц үг">
+  <button class="mainbtn" onclick="authUser('login')">Нэвтрэх</button>
+  <button class="mainbtn" style="background:#f8dce9;color:#b43d75" onclick="authUser('signup')">Бүртгүүлэх</button>
+  <p id="authMessage"></p>
+ </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://marlhculacividpbfddn.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "ЭНД_PUBLISHABLE_KEY_ЭЭ_ХИЙНЭ";
+
+let db = null;
+
+if (SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_")) {
+ db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+ );
+}
+
+function openLogin(){
+ document.getElementById("loginModal").style.display="flex";
+}
+function closeLogin(){
+ document.getElementById("loginModal").style.display="none";
+}
+
+async function authUser(type){
+ const message=document.getElementById("authMessage");
+ if(!db){
+  message.textContent="Supabase түлхүүрээ холбох шаардлагатай.";
+  return;
+ }
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email || !password){
+  message.textContent="Имэйл болон нууц үгээ оруулна уу.";
+  return;
+ }
+ const result = type==="signup"
+  ? await db.auth.signUp({email,password})
+  : await db.auth.signInWithPassword({email,password});
+
+ message.textContent=result.error
+  ? result.error.message
+  : type==="signup"
+   ? "Бүртгэл үүслээ. Имэйлээ шалгана уу."
+   : "Амжилттай нэвтэрлээ!";
+}
+
+function trackParcel(){
+ const code=document.getElementById("tracking").value.trim();
+ const message=document.getElementById("message");
+ if(!code){
+  message.textContent="Илгээмжийн кодоо оруулна уу.";
+  return;
+ }
+ message.textContent="Илгээмжийн хайлтыг Supabase-тай холбох дараагийн алхамд тохируулна.";
+}
+</script>
+</body>
+</html>
